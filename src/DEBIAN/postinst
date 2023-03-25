@@ -1,0 +1,5 @@
+#!/usr/bin/bash
+
+/usr/bin/launchctl unload /Library/LaunchDaemons/com.github.clburlison.dmon.plist || true
+/usr/bin/sleep 2
+/usr/bin/launchctl load /Library/LaunchDaemons/com.github.clburlison.dmon.plist

@@ -1,0 +1,31 @@
+#!/usr/bin/bash
+
+# Not perfect. It takes iOS ~10 seconds to register
+# the application has been sent to the background
+# or crashed.
+check_pogo_running() {
+    ps aux | grep -i "PokmonGO.app/PokmonGO" | grep -v grep
+}
+
+restart_pogo() {
+    echo restarting POGO and SERVICES
+    killall pokemongo
+    killall kernbypass
+    # sleep 1
+    # killall substrate
+    # sleep 2
+    # /etc/rc.d/substitute-launcher
+    # sleep 5
+    # sbreload
+    sleep 5
+    open com.nianticlabs.pokemongo
+    echo "done"
+}
+
+main() {
+    check_pogo_running
+    if [ "$?" -eq "1" ]; then
+        restart_pogo
+    fi
+}
+

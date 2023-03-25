@@ -1,0 +1,11 @@
+Architecture: iphoneos-arm
+Author: clburlison
+Depends: firmware (>= 14.0)
+Description: Monitor iOS application
+Homepage: https://github.com/clburlison/dmon
+Maintainer: clburlison
+Name: dmon
+Package: com.github.clburlison.dmon
+Section: Tweaks
+Tag: purpose::extension, role::enduser
+Version: 0.0.5
