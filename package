@@ -1,0 +1,6 @@
+#!/bin/zsh
+# Ugly hack. This should really be excluded by dm.pl but ¯\_(ツ)_/¯
+/usr/bin/find . -name '.DS_Store' -type f -prune -exec rm -rf '{}' +
+DEB_VERSION=$(grep -i "^Version:" ./src/DEBIAN/control | cut -d' ' -f2 -)
+mkdir releases
+./bin/dm.pl src/ releases/com.github.clburlison.dmon-"$DEB_VERSION".deb

@@ -1,0 +1,8 @@
+config.json
+releases
+*.ipa
+*.deb
+.env
+.DS_Store
+*.dylib
+.theos

@@ -1,0 +1,33 @@
+#!/bin/zsh
+############################################
+# Version 0.0.2
+############################################
+
+## Setup ssh passwordless auth (Optional). Allow this via cli argument?
+#ssh root@localhost -p 2222 'mkdir ~/.ssh'
+#scp -P 2222 ~/.ssh/main.pub root@localhost:~/.ssh/authorized_keys
+
+echo Installing Pogo
+ideviceinstaller -i ./pogo.ipa
+
+# echo Install Substitute
+# Requires https://repo.palera.in which should be added by default
+ssh root@localhost -p 2222 'apt install -y --allow-unauthenticated com.saurik.substrate.safemode'
+ssh root@localhost -p 2222 'apt install -y --allow-unauthenticated com.ex.substitute'
+
+for f in ./debs/*
+do
+if [[ "$f" = *\.deb* ]]
+then
+  echo Installing $f
+  scp -P 2222 $f root@localhost:~/
+  ssh root@localhost -p 2222 "dpkg -i $(basename $f)"
+fi
+done
+
+echo Copying over config file
+ssh root@localhost -p 2222 'mkdir -p /var/mobile/Application\ Support/GoCheats/'
+scp -P 2222 ./config.json root@localhost:/var/mobile/Application\ Support/GoCheats/config.json
+
+echo Phone clean - removing debs
+ssh root@localhost -p 2222 'rm ~/*.deb'
