@@ -12,6 +12,8 @@ ideviceinstaller -i ./pogo.ipa
 
 # echo Install Substitute
 # Requires https://repo.palera.in which should be added by default
+ssh root@localhost -p 2222 'apt update'
+ssh root@localhost -p 2222 'apt upgrade -y --allow-unauthenticated'
 ssh root@localhost -p 2222 'apt install -y --allow-unauthenticated com.saurik.substrate.safemode'
 ssh root@localhost -p 2222 'apt install -y --allow-unauthenticated com.ex.substitute'
 
