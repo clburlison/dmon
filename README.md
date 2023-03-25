@@ -21,7 +21,7 @@ If you only care about the monitoring component from this repo you can grab the 
 
 It is assumed you know your way around a command line. All commands are run on your computer connected to a single iOS device. While it is possible to do some of this manually on a jailbroken iOS device that is pron to human error.
 
-1. Grab a valid iOS 14+ device and jailbreak it: [https://ios.cfw.guide/get-started/select-iphone/]()
+1. Grab a valid iOS 14+ device and jailbreak it: https://ios.cfw.guide/get-started/select-iphone/
 1. Clone this git repo
 
    ```sh
@@ -49,10 +49,10 @@ It is assumed you know your way around a command line. All commands are run on y
 
    debs to include:
 
-   - [https://repo.spooferpro.com/debs/com.spooferpro.kernbypass_1.1.0_iphoneos-arm64.deb]()
+   - https://repo.spooferpro.com/debs/com.spooferpro.kernbypass_1.1.0_iphoneos-arm64.deb
    - Potentially any paid/private debs. nudge, nudge, wink, wink
-   - (Optional) [https://cydia.akemi.ai/debs/nodelete-ai.akemi.appsyncunified.deb]()
-   - (Optional) [https://cydia.akemi.ai/debs/nodelete-ai.akemi.appinst.deb]()
+   - (Optional) https://cydia.akemi.ai/debs/nodelete-ai.akemi.appsyncunified.deb
+   - (Optional) https://cydia.akemi.ai/debs/nodelete-ai.akemi.appinst.deb
 
 1. Grab a copy of Pokemon Go via [majd/ipatool](https://github.com/majd/ipatool)
 
