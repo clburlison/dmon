@@ -4,7 +4,7 @@
 
 A monitor solution for jailbroken iOS devices. The core goal of this project is to make sure a specific iOS application is constantly running without needed to use Single App Mode (SAM) or Guided Access Mode (GAM).
 
-A `setup` script is included to help with initial configuration of a jailbroken device.
+A `./bin/setup` script is included to help with initial configuration of a jailbroken device.
 
 Lastly, in the future I would like to include a way to handle updates for the various components.
 
@@ -80,7 +80,9 @@ It is assumed you know your way around a command line. All commands are run on y
 1. In a third terminal window run:
 
    ```sh
-   ./setup
+   ./bin/setup
+   # If you want to setup passwordless ssh then pass the argument with the path to your key
+   ./bin/setup -s ~/.ssh/main.pub
    ```
 
 1. Assuming everything worked correctly your phone should be properly configured.

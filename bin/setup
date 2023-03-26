@@ -1,11 +1,27 @@
 #!/bin/zsh
 ############################################
-# Version 0.0.2
+# Version 0.0.3
 ############################################
+SCRIPT_NAME=$(basename $0)
+# Make sure this is always ran from the parent directory path.
+cd "$(dirname "$0")"
+cd ..
 
-## Setup ssh passwordless auth (Optional). Allow this via cli argument?
-#ssh root@localhost -p 2222 'mkdir ~/.ssh'
-#scp -P 2222 ~/.ssh/main.pub root@localhost:~/.ssh/authorized_keys
+while getopts 's:' OPTION; do
+  case "$OPTION" in
+    s)
+      SSH_KEY_PATH="$OPTARG"
+      echo Setting up ssh passwordless auth with: "$SSH_KEY_PATH"
+      ssh root@localhost -p 2222 'mkdir ~/.ssh'
+      scp -P 2222 "$SSH_KEY_PATH" root@localhost:~/.ssh/authorized_keys
+      ;;
+    ?)
+      echo "Script usage: "$SCRIPT_NAME" [-s path/to/ssh_public_key]" >&2
+      exit 1
+      ;;
+  esac
+done
+shift "$(($OPTIND -1))"
 
 echo Installing Pogo
 ideviceinstaller -i ./pogo.ipa
