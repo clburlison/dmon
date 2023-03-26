@@ -1,4 +1,8 @@
 #!/bin/zsh
+# Make sure this is always ran from the parent directory path.
+cd "$(dirname "$0")"
+cd ..
+
 # Ugly hack. This should really be excluded by dm.pl but ¯\_(ツ)_/¯
 /usr/bin/find . -name '.DS_Store' -type f -prune -exec rm -rf '{}' +
 DEB_VERSION=$(grep -i "^Version:" ./src/DEBIAN/control | cut -d' ' -f2 -)
