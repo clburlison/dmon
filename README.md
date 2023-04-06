@@ -166,6 +166,10 @@ This isn't a pure solution. I am lazy. Now bugger off.
 
 I don't have the original authors permissions to upload their files.
 
+### Why is my https url not working?
+
+We are using the stock CA Certificates installed as part of the iOS jailbreak. The Procursus Team placed files in `/usr/lib/ssl/cacert.pem` and I figured it would be safe to keep using them. Those root certs might have expired and need an update.
+
 ## References
 
 - [dm.pl](https://github.com/theos/dm.pl)

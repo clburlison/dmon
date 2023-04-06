@@ -17,9 +17,9 @@ We are using cURL which means external libraries are required (woo fun). You can
 Untar the file and copy
 
 ```
-# Steps from memory someone should review this
+# Steps from memory someone should review this. Might be able to use the lib/iOS builds. :shrug: idk what the difference is.
 tar xf libcurl-8.0.1-openssl-1.1.1t-nghttp2-1.52.0.tgz
-cp ./libcurl-8.0.1-openssl-1.1.1t-nghttp2-1.52.0/lib/iOS/{libcrypto.a,libcurl.a,libnghttp2.a,libssl.a} ./theos/lib/
+cp ./libcurl-8.0.1-openssl-1.1.1t-nghttp2-1.52.0/lib/iOS-fat/{libcrypto.a,libcurl.a,libnghttp2.a,libssl.a} ./theos/lib/
 ```
 
 then grab the header files

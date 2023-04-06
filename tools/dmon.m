@@ -164,6 +164,9 @@ int downloadFile(NSString *url, NSString *userpass, NSString *outfile) {
         fp = fopen([outfile UTF8String], "wb");
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
 
+        // Set the path to the cacerts file
+        curl_easy_setopt(curl, CURLOPT_CAINFO, "/usr/lib/ssl/cacert.pem");
+
         // Perform the request
         res = curl_easy_perform(curl);
         NSLog(@"dmon: Curl return code for %@: %u", url, res);
