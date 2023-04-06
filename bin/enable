@@ -1,0 +1,3 @@
+#!/usr/bin/env zsh
+
+ssh iphone "/usr/bin/launchctl load /Library/LaunchDaemons/com.github.clburlison.dmon.plist"
