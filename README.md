@@ -23,7 +23,8 @@ If you only care about the monitoring component from this repo you can grab the 
 - A jailbroken iPhone that is supervised
 - Apple Command Line Tools (`xcode-select --install`)
 - imobiledevice tools (`brew install libimobiledevice`)
-- Optional but **highly recommend** creating a ssh keypair and setting up a ssh config entry
+- Optional but **highly recommend** creating a ssh keypair
+- Setup your ssh config entry. This makes your life much easier as ssh sessions can be remembered.
 
   ```sh
   cat ~/.ssh/config
@@ -44,13 +45,13 @@ If you only care about the monitoring component from this repo you can grab the 
 It is assumed you know your way around a command line. All commands are run on your computer connected to a single iOS device. While it is possible to do some of this manually on a jailbroken iOS device that is pron to human error.
 
 1. Grab a valid iOS 14+ device and jailbreak it: https://ios.cfw.guide/get-started/select-iphone/
-1. Clone this git repo
+1. Clone this git repo.
 
    ```sh
    git clone https://github.com/clburlison/dmon
    ```
 
-1. Change directory into the freshly cloned repo
+1. Change directory into the freshly cloned repo.
 
    ```sh
    cd dmon
@@ -71,7 +72,7 @@ It is assumed you know your way around a command line. All commands are run on y
    }
    ```
 
-1. Download any extra .deb files you want installed into the `./debs/` directory. These are installed in order based on file name IE 01_foobar.deb, 02_curl.deb, etc.
+1. Download any extra .deb files you want installed into the `./debs/` directory.
 
    debs to include:
 
@@ -83,7 +84,7 @@ It is assumed you know your way around a command line. All commands are run on y
    - (Optional) https://cydia.akemi.ai/debs/nodelete-ai.akemi.appinst.deb
    - **Potentially any paid/private debs. nudge, nudge, wink, wink**
 
-1. Grab a copy of Pokemon Go via [majd/ipatool](https://github.com/majd/ipatool)
+1. Grab a copy of Pokemon Go via [majd/ipatool](https://github.com/majd/ipatool).
 
    ```sh
    brew tap majd/repo
@@ -92,8 +93,8 @@ It is assumed you know your way around a command line. All commands are run on y
    ipatool download --purchase -b com.nianticlabs.pokemongo -o pogo.ipa
    ```
 
-1. Connect your iOS device to your computer via USB
-1. Open Terminal and run (remember to only have one phone connected)
+1. Connect your iOS device to your computer via USB.
+1. Open Terminal and run (remember to only have one phone connected).
 
    ```sh
    # Alteratively you can pass -u <device-uuid> if multiple phones are connected
@@ -107,11 +108,11 @@ It is assumed you know your way around a command line. All commands are run on y
    # Now disconnect with: Control + d
    ```
 
-1. Now run
+1. Now run:
 
    ```sh
    ./bin/setup
-   # If you want to setup passwordless ssh then pass the argument with the path to your key
+   # If you want to setup passwordless ssh then pass the argument with the path to your public key
    ./bin/setup -s ~/.ssh/main.pub
    ```
 
@@ -127,9 +128,51 @@ Bonus items that are out of scope for this project.
 
 - All testing has been completed with iOS 15 using palera1n
 - Only confirmed on older A9 processors aka iPhone SE first gen
-- DEB Package is build on macOS Ventura
+- DEB Package is built on macOS Ventura
+
+## Commonly asked questions
+
+### Why didn't you use Theos to build the deb?
+
+I was expecting to add a few external compiled binaries and didn't want to read a ton of documentation. Things changed and now I'm too lazy to rewrite.
+
+### How can I stop it?!?!
+
+1. Close Pokemon Go on the phone
+2. ssh into the phone & unload the launch daemon
+
+   ```sh
+   ssh iphone
+   /usr/bin/launchctl unload /Library/LaunchDaemons/com.github.clburlison.dmon.plist
+   ```
+
+### What is the point of the `dmon_enable` key?
+
+Thought it would make it easier for troubleshooting. It might be removed in the future. :shrug:
+
+### How do I setup the webserver?
+
+It is a flat structure. You can use nginx, apache, caddy, python, node, etc. Your files should be named like this:
+
+```sh
+top_level_folder
+├── gc.deb
+├── pogo.ipa
+└── version.txt
+```
+
+Then in your config point `dmon_url` to `http://HOSTNAME:PORT/top_level_folder`.
+
+### Why did you reuse the existing `config.json`?
+
+This isn't a pure solution. I am lazy. Now bugger off.
+
+### Why didn't you include the debs I need?
+
+I don't have the original authors permissions to upload their files.
 
 ## References
 
 - [dm.pl](https://github.com/theos/dm.pl)
+- [theos](https://theos.dev)
 - [appknox/Open](https://github.com/appknox/Open) which was originally from [conradev/Open](https://github.com/conradev/Open)
