@@ -67,8 +67,7 @@ It is assumed you know your way around a command line. All commands are run on y
      "device_configuration_manager_url": "https://YOUR_AWESOME_DCM_URL",
      "dmon_url": "https://YOUR_URL:PORT/path/", // Url to download update files from
      "dmon_username": "username", // Basic Auth username. Leave empty if not used
-     "dmon_password": "password", // Basic Auth password. Leave empty if not used
-     "dmon_enable": true // If you want dmon to activity monitor/update. Might remove this key in the future
+     "dmon_password": "password" // Basic Auth password. Leave empty if not used
    }
    ```
 
@@ -145,10 +144,6 @@ I was expecting to add a few external compiled binaries and didn't want to read 
    ssh iphone
    /usr/bin/launchctl unload /Library/LaunchDaemons/com.github.clburlison.dmon.plist
    ```
-
-### What is the point of the `dmon_enable` key?
-
-Thought it would make it easier for troubleshooting. It might be removed in the future. :shrug:
 
 ### How do I setup the webserver?
 

@@ -4,20 +4,6 @@
 #import <dlfcn.h>
 #include <curl/curl.h>
 
-// Get GoCheats version. Need to silence stderr. Popen might handle this for us.
-// apt list | grep -i gocheats | cut -d ' ' -f 2
-// Install with: appinst pogo.ipa
-
-int killall(NSString *appName) {
-    NSLog(@"dmon: Stopping appName: %@", appName);
-    int stop_pid;
-    char command[100]; // Make it large enough.
-    sprintf(command, "killall %s", [appName UTF8String]);
-    FILE *stop_pid_cmd = popen(command, "r");
-    fscanf(stop_pid_cmd, "%d", &stop_pid);
-    pclose(stop_pid_cmd);
-    return stop_pid;
-}
 
 NSString * getFrontMostApplication() {
     mach_port_t p = SBSSpringBoardServerPort();
@@ -28,6 +14,136 @@ NSString * getFrontMostApplication() {
     NSString * frontmostApp = [NSString stringWithFormat:@"%s", frontmostAppS];
     NSLog(@"dmon: Frontmost app is: %@", frontmostApp);
     return (frontmostApp);
+}
+
+NSString * installedPogoVersion(void) {
+    NSLog(@"dmon: Finding Pogo version...");
+    char bundlePath[150]; // This should never be longer than 100 but we added a buffer
+    FILE *pogo_cmd = popen("find /var/containers/Bundle/Application/ -type d -name 'PokmonGO.app'", "r");
+    if (pogo_cmd == NULL) {
+        NSLog(@"dmon: Unable to find PokemonGo on device");
+        return nil;
+    }
+
+    fgets(bundlePath, sizeof(bundlePath), pogo_cmd);
+    pclose(pogo_cmd);
+    bundlePath[strcspn(bundlePath, "\n")] = '\0'; // Remove newline character
+    sprintf(bundlePath, "%s/Info.plist", bundlePath);
+
+    NSString *path = [[NSString alloc] initWithUTF8String:bundlePath];
+    NSDictionary *infoDict = [[NSDictionary alloc] initWithContentsOfFile:path];
+    NSString *versionString = [infoDict objectForKey:@"CFBundleShortVersionString"];
+    NSLog(@"dmon: Installed version of Pokemon Go: %@", versionString);
+    return versionString;
+}
+
+NSString * installedGCVersion(void) {
+    // Can't use this really clean method since this library isn't versioned. Big Sad!
+    // NSBundle *goCheatsBundle = [NSBundle bundleWithPath:@"/Library/MobileSubstrate/DynamicLibraries/libgocheats.dylib"];
+    // NSLog(@"dmon: bundle info is: %@", goCheatsBundle);
+    // NSString *goCheatsVersion = [goCheatsBundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+    // NSLog(@"dmon: Version: %@", goCheatsVersion);
+    // return goCheatsVersion;
+
+    NSLog(@"dmon: Finding GC version...");
+    FILE *gc_cmd = popen("apt list 2>/dev/null | grep -i gocheats | cut -d ' ' -f 2", "r");
+    if (gc_cmd == NULL) {
+        NSLog(@"dmon: Unable to find GC version");
+        return nil;
+    }
+
+    char version[256];
+    int bytesRead = fread(version, sizeof(char), 255, gc_cmd);
+    version[bytesRead] = '\0';
+    pclose(gc_cmd);
+    version[strcspn(version, "\n")] = '\0'; // Remove newline character
+
+    NSLog(@"dmon: Installed version of GC: %s", version);
+    return [[NSString alloc] initWithUTF8String:version];
+}
+
+NSDictionary * parseConfig(void) {
+    NSString *filePath = @"/var/mobile/Application Support/GoCheats/config.json";
+    NSURL *fileURL = [NSURL fileURLWithPath:filePath];
+    NSError *error;
+    NSData *fileData = [NSData dataWithContentsOfURL:fileURL options:NSDataReadingMappedIfSafe error:&error];
+
+    if (fileData) {
+        NSError *jsonError;
+        NSDictionary *jsonObject = [NSJSONSerialization JSONObjectWithData:fileData options:NSJSONReadingMutableContainers error:&jsonError];
+        
+        if (jsonObject) {
+            // Successfully parsed the JSON data
+            return jsonObject;
+        } else {
+            // Failed to parse the JSON data
+            NSLog(@"dmon: Error parsing JSON: %@", jsonError);
+        }
+    } else {
+        // Failed to read the file data
+        NSLog(@"dmon: Error reading file: %@", error);
+    }
+    return nil;
+}
+
+NSMutableDictionary * parseKeyValueFileAtPath(NSString *filePath) {
+    NSMutableDictionary *resultDict = [NSMutableDictionary dictionary];
+    
+    NSError *error = nil;
+    NSString *fileContents = [NSString stringWithContentsOfFile:filePath encoding:NSUTF8StringEncoding error:&error];
+    if (error) {
+        NSLog(@"dmon: Error reading file: %@", error);
+        return nil;
+    }
+    
+    NSArray *lines = [fileContents componentsSeparatedByString:@"\n"];
+    for (NSString *line in lines) {
+        NSArray *parts = [line componentsSeparatedByString:@": "];
+        if (parts.count == 2) {
+            NSString *key = parts[0];
+            NSString *value = parts[1];
+            [resultDict setObject:value forKey:key];
+        }
+    }
+    
+    return resultDict;
+}
+
+int killall(NSString *appName) {
+    NSLog(@"dmon: Stopping appName: %@", appName);
+    int stop_pid;
+    char command[100]; // Make it large enough.
+    sprintf(command, "killall %s 2>/dev/null", [appName UTF8String]);
+    FILE *stop_pid_cmd = popen(command, "r");
+    fscanf(stop_pid_cmd, "%d", &stop_pid);
+    pclose(stop_pid_cmd);
+    return stop_pid;
+}
+
+int installIpa(NSString *filePath) {
+    NSLog(@"dmon: Installing: %@...", filePath);
+    int results;
+    char command[100];
+    sprintf(command, "appinst %s", [filePath UTF8String]);
+    FILE *install_ipa_cmd = popen(command, "r");
+    fscanf(install_ipa_cmd, "%d", &results);
+    pclose(install_ipa_cmd);
+    return results;
+}
+
+int installDeb(NSString *filePath) {
+    NSLog(@"dmon: Installing: %@...", filePath);
+    int ext_code;
+    char deb_command[100];
+    sprintf(deb_command, "dpkg -i %s", [filePath UTF8String]);
+    FILE *install_deb_cmd = popen(deb_command, "r");
+    char output[100];
+    while (fgets(output, sizeof(output), install_deb_cmd) != NULL) {
+        NSLog(@"dmon: dpkg output: %s", output);
+    }
+    ext_code = pclose(install_deb_cmd);
+    NSLog(@"dmon: Results for %@ are: %d", filePath, ext_code);
+    return ext_code;
 }
 
 int downloadFile(NSString *url, NSString *userpass, NSString *outfile) {
@@ -60,33 +176,50 @@ int downloadFile(NSString *url, NSString *userpass, NSString *outfile) {
 }
 
 void update(NSDictionary *config) {
-    // Strip trailing forward slashes to make things consistent for users
-    NSString *url = [config[@"dmon_url"] stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]];
-    NSLog(@"dmon: update URL is: %@", url);
-    downloadFile(
-        [NSString stringWithFormat:@"%@/version.txt", url],
-        [NSString stringWithFormat:@"%@:%@", config[@"dmon_username"], config[@"dmon_password"]],
-        @"version.txt"
-    );
-
+    NSString *versionFile = @"version.txt";
     NSString *pogo_ipa = @"pogo.ipa";
     NSString *gc_deb = @"gc.deb";
+    NSString *pogoVersion = installedPogoVersion();
+    NSString *gcVersion = installedGCVersion();
 
-    if (access([pogo_ipa UTF8String], F_OK) != 0) {
-        NSLog(@"dmon: File does not exist. Let's download it");
-        downloadFile(
+    // Strip trailing forward slashes to make things consistent for users
+    NSString *url = [config[@"dmon_url"] stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]];
+    NSLog(@"dmon: Update URL is: %@", url);
+    downloadFile(
+        [NSString stringWithFormat:@"%@/%@", url, versionFile],
+        [NSString stringWithFormat:@"%@:%@", config[@"dmon_username"], config[@"dmon_password"]],
+        versionFile
+    );
+
+    // Parse the config map style version.txt to NSDictionary
+    NSMutableDictionary *parsedVersion = parseKeyValueFileAtPath(versionFile);
+
+    // Update Pogo if needed
+    if (![pogoVersion isEqualToString:parsedVersion[@"pogo"]]) {
+        NSLog(@"dmon: Pogo version mismatch. Have %@. Need %@", pogoVersion, parsedVersion[@"pogo"]);
+        int pogoDownload = downloadFile(
             [NSString stringWithFormat:@"%@/%@", url, pogo_ipa],
             [NSString stringWithFormat:@"%@:%@", config[@"dmon_username"], config[@"dmon_password"]],
             pogo_ipa
         );
+        // TODO: Do we need a stricter validation?
+        if (pogoDownload == 0) {
+            installIpa(pogo_ipa);
+        }
     }
-    if (access([gc_deb UTF8String], F_OK) != 0) {
-        NSLog(@"dmon: File does not exist. Let's download it");
-        downloadFile(
+
+    // Update GC if needed
+    if (![gcVersion isEqualToString:parsedVersion[@"gc"]]) {
+        NSLog(@"dmon: GC version mismatch. Have %@. Need %@", gcVersion, parsedVersion[@"gc"]);
+        int gcDownload = downloadFile(
             [NSString stringWithFormat:@"%@/%@", url, gc_deb],
             [NSString stringWithFormat:@"%@:%@", config[@"dmon_username"], config[@"dmon_password"]],
             gc_deb
         );
+        // TODO: Do we need a stricter validation?
+        if (gcDownload == 0) {
+            installDeb(gc_deb);
+        }
     }
 }
 
@@ -109,40 +242,16 @@ void monitor(void) {
     }
 }
 
-NSDictionary * parseConfig(void) {
-    NSString *filePath = @"/var/mobile/Application Support/GoCheats/config.json";
-    NSURL *fileURL = [NSURL fileURLWithPath:filePath];
-    NSError *error;
-    NSData *fileData = [NSData dataWithContentsOfURL:fileURL options:NSDataReadingMappedIfSafe error:&error];
+int main(void) {
+    NSLog(@"dmon: Starting...");
 
-    if (fileData) {
-        NSError *jsonError;
-        NSDictionary *jsonObject = [NSJSONSerialization JSONObjectWithData:fileData options:NSJSONReadingMutableContainers error:&jsonError];
-        
-        if (jsonObject) {
-            // Successfully parsed the JSON data
-            return jsonObject;
-        } else {
-            // Failed to parse the JSON data
-            NSLog(@"dmon: Error parsing JSON: %@", jsonError);
-        }
-    } else {
-        // Failed to read the file data
-        NSLog(@"dmon: Error reading file: %@", error);
-    }
-    return nil;
-}
-
-int main(void)
-{
-    NSDictionary *config = parseConfig();
-    NSLog(@"dmon: Service setting: %@", config[@"dmon_enable"]);
+    // Start loop
     int i = 0;
-    while ([config[@"dmon_enable"] boolValue]) {
+    while (1) {
         // Only call at the start of loop
         if (i == 0) {
-            config = parseConfig();
-            // NSLog(@"dmon: Our full config: %@", config);
+            NSDictionary *config = parseConfig();
+            // NSLog(@"dmon: Full config: %@", config);
             update(config);
         }
 

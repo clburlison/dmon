@@ -19,6 +19,8 @@ dmon_OBJ_FILES = ./theos/lib/libcrypto.a ./theos/lib/libcurl.a ./theos/lib/libng
 dmon_LDFLAGS = -lssl -lcurl -lz
 dmon_CODESIGN_FLAGS = -SEntitlements.plist
 
+include $(THEOS_MAKE_PATH)/tool.mk
+
 all::
 	mkdir -p ../src/usr/bin
 	/bin/cp .theos/obj/dmon ../src/usr/bin
