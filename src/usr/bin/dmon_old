@@ -1,0 +1,45 @@
+#!/usr/bin/bash
+
+# Not perfect. It takes iOS ~10 seconds to register
+# the application has been sent to the background
+# or crashed. Need to test and see if this is consistent.
+get_pogo_pid() {
+    # echo $(ps aux | grep -i "PokmonGO.app" | grep -v grep | tr -s ' ' | cut -d ' ' -f 2)
+    echo $(ps ax | grep -i "PokmonGO.app" | grep -v grep | cut -d ' ' -f 2)
+}
+
+get_kernbypass_pid() {
+    echo $(ps ax | grep -i "/usr/bin/kernbypass" | grep -v grep | cut -d ' ' -f 2)
+}
+
+get_substrate_pid() {
+    echo $(ps ax | grep -i "/etc/rc.d/substitute-launcher" | grep -v grep | cut -d ' ' -f 2)
+}
+
+restart_pogo() {
+    echo Restarting POGO and SERVICES
+    # killall pokemongo
+    # killall kernbypass
+    # sleep 1
+    # killall substrate
+    # sleep 2
+    # /etc/rc.d/substitute-launcher
+    # sleep 5
+    # sbreload
+    local pogo_pid=$(get_pogo_pid)
+    kill -9 $pogo_pid 2>/dev/null
+    local bypass_pid=$(get_kernbypass_pid)
+    kill -9 $bypass_pid 2>/dev/null
+    sleep 5
+    open com.nianticlabs.pokemongo
+    echo "done"
+}
+
+main() {
+    local pid=$(get_pogo_pid)
+    if [ -z "$pid" ]; then
+        restart_pogo
+    fi
+}
+
+main

@@ -6,3 +6,4 @@ releases
 .DS_Store
 *.dylib
 .theos
+local
