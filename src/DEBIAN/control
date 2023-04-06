@@ -8,4 +8,4 @@ Name: dmon
 Package: com.github.clburlison.dmon
 Section: Tweaks
 Tag: purpose::extension, role::enduser
-Version: 0.0.6
+Version: 0.0.7

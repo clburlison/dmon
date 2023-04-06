@@ -4,7 +4,7 @@
 
 A monitor solution for jailbroken iOS devices. The core goal of this project is to make sure a specific iOS application is constantly running without needed to use Single App Mode (SAM) or Guided Access Mode (GAM).
 
-A `./bin/setup` script is included to help with initial configuration of a jailbroken device.
+A script, `./bin/setup`, is included to help with initial configuration of a jailbroken device.
 
 Lastly, in the future I would like to include a way to handle updates for the various components.
 
@@ -16,6 +16,28 @@ If you only care about the monitoring component from this repo you can grab the 
 1. Copy it to your iOS device
 1. Run `dpkg -i com.github.clburlison.dmon-XXX.deb`
 1. The LaunchDaemon service will now monitor to make sure all components are properly running
+
+## Prerequisites
+
+- A Mac
+- A jailbroken iPhone that is supervised
+- Apple Command Line Tools (`xcode-select --install`)
+- imobiledevice tools (`brew install libimobiledevice`)
+- Optional but **highly recommend** creating a ssh keypair and setting up a ssh config entry
+
+  ```sh
+  cat ~/.ssh/config
+  Host iphone
+    HostName localhost
+    User root
+    Port 2222
+    StrictHostKeyChecking no
+
+  Host *
+    ControlMaster auto
+    ControlPath /tmp/%r@%h:%p
+    ControlPersist 1800
+  ```
 
 ## Getting started
 
@@ -34,25 +56,32 @@ It is assumed you know your way around a command line. All commands are run on y
    cd dmon
    ```
 
-1. Create a `config.json` at the root of this repo with the correct values
+1. Create a `config.json` at the root of this repo with the correct values.
+
+   Make sure to remove all `// comments` before saving. They are not valid json!
 
    ```json
    {
-     "api_key": "YOUR_GC_API_KEY",
-     "device_configuration_manager_url": "https://my_awesome_DCM_url"
+     "api_key": "YOUR_API_KEY",
+     "device_configuration_manager_url": "https://YOUR_AWESOME_DCM_URL",
+     "dmon_url": "https://YOUR_URL:PORT/path/", // Url to download update files from
+     "dmon_username": "username", // Basic Auth username. Leave empty if not used
+     "dmon_password": "password", // Basic Auth password. Leave empty if not used
+     "dmon_enable": true // If you want dmon to activity monitor/update. Might remove this key in the future
    }
    ```
 
-1. Download any extra .deb files you want installed into the `./debs/` directory. These are installed based on file name IE 01_foobar.deb, 02_curl.deb, etc.
-
-   > Substitute is installed as part of the `setup` script
+1. Download any extra .deb files you want installed into the `./debs/` directory. These are installed in order based on file name IE 01_foobar.deb, 02_curl.deb, etc.
 
    debs to include:
 
+   - https://apt.bingner.com/debs/1443.00/com.ex.substitute_2.3.1_iphoneos-arm.deb
+   - https://apt.bingner.com/debs/1443.00/com.saurik.substrate.safemode_0.9.6005_iphoneos-arm.deb
    - https://repo.spooferpro.com/debs/com.spooferpro.kernbypass_1.1.0_iphoneos-arm64.deb
-   - Potentially any paid/private debs. nudge, nudge, wink, wink
+   - https://github.com/clburlison/dmon/releases
    - (Optional) https://cydia.akemi.ai/debs/nodelete-ai.akemi.appsyncunified.deb
    - (Optional) https://cydia.akemi.ai/debs/nodelete-ai.akemi.appinst.deb
+   - **Potentially any paid/private debs. nudge, nudge, wink, wink**
 
 1. Grab a copy of Pokemon Go via [majd/ipatool](https://github.com/majd/ipatool)
 
@@ -75,9 +104,10 @@ It is assumed you know your way around a command line. All commands are run on y
 
    ```sh
    ssh root@localhost -p 2222 # default password is 'alpine'
+   # Now disconnect with: Control + d
    ```
 
-1. In a third terminal window run:
+1. Now run
 
    ```sh
    ./bin/setup
