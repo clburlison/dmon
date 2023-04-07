@@ -43,8 +43,7 @@ ssh -p 2222 root@localhost "dpkg -i *.deb"
 
 echo Copying over config file
 ssh -p 2222 root@localhost 'mkdir -p /var/mobile/Application\ Support/GoCheats/'
-# scp -P 2222 ./config.json root@localhost:'/var/mobile/Application\ Support/GoCheats/config.json'
-scp -P 2222 ./config.json root@localhost:/var/mobile/Application\ Support/GoCheats/config.json
+scp -P 2222 ./config.json root@localhost:"/var/mobile/Application\ Support/GoCheats/config.json"
 ssh -p 2222 root@localhost "chown -R mobile:mobile /var/mobile/Application\ Support/GoCheats/"
 
 echo Phone clean - removing debs - respring
