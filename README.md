@@ -1,26 +1,30 @@
 # dmon (Device Monitor)
 
-> :construction_worker: :hammer: **Work in progress. This is very much beta.** :construction: :vertical_traffic_light:
+> :construction_worker: :hammer: **Work in progress** :construction: :vertical_traffic_light:
 
 A monitor solution for jailbroken iOS devices. The core goal of this project is to make sure a specific iOS application is constantly running without needed to use Single App Mode (SAM) or Guided Access Mode (GAM).
 
 A script, `./bin/setup`, is included to help with initial configuration of a jailbroken device.
 
-Lastly, in the future I would like to include a way to handle updates for the various components.
+## Table of Contents
 
-## Monitor only
+- [Prerequisites](#prerequisites)
+- [Getting started](#getting-started)
+- [Testing](#testing)
+- [Commonly asked questions](#commonly-asked-questions)
+  - [Why didnt you use theos to build the deb](#why-didnt-you-use-theos-to-build-the-deb)
+  - [How do I stop it?](#how-can-i-stop-it)
+  - [How do I setup the webserver?](#how-do-i-setup-the-webserver)
+  - [Why did you reuse the existing `config.json`](#why-did-you-reuse-the-existing-configjson)
+  - [Why didn't you include the debs I need](#why-didnt-you-include-the-debs-i-need)
+  - [Why is my https url not working?](#why-is-my-https-url-not-working)
+- [References](#references)
 
-If you only care about the monitoring component from this repo you can grab the latest compiled `.deb` from the [Release page](https://github.com/clburlison/dmon/releases)
-
-1. Grab the latest `com.github.clburlison.dmon-XXX.deb`
-1. Copy it to your iOS device
-1. Run `dpkg -i com.github.clburlison.dmon-XXX.deb`
-1. The LaunchDaemon service will now monitor to make sure all components are properly running
 
 ## Prerequisites
 
 - A Mac
-- A jailbroken iPhone that is supervised
+- A jailbroken iPhone
 - Apple Command Line Tools (`xcode-select --install`)
 - imobiledevice tools (`brew install libimobiledevice`)
 - Optional but **highly recommend** creating a ssh keypair
@@ -79,8 +83,8 @@ It is assumed you know your way around a command line. All commands are run on y
    - https://apt.bingner.com/debs/1443.00/com.saurik.substrate.safemode_0.9.6005_iphoneos-arm.deb
    - https://repo.spooferpro.com/debs/com.spooferpro.kernbypass_1.1.0_iphoneos-arm64.deb
    - https://github.com/clburlison/dmon/releases
-   - (Optional) https://cydia.akemi.ai/debs/nodelete-ai.akemi.appsyncunified.deb
-   - (Optional) https://cydia.akemi.ai/debs/nodelete-ai.akemi.appinst.deb
+   - (Optional - Required to pogo.ipa updates) https://cydia.akemi.ai/debs/nodelete-ai.akemi.appsyncunified.deb
+   - (Optional - Required to pogo.ipa updates) https://cydia.akemi.ai/debs/nodelete-ai.akemi.appinst.deb
    - **Potentially any paid/private debs. nudge, nudge, wink, wink**
 
 1. Grab a copy of Pokemon Go via [majd/ipatool](https://github.com/majd/ipatool).
@@ -123,7 +127,7 @@ Bonus items that are out of scope for this project.
 - Configure your device to use Shared Internet from your mac
 - Supervise your device and push a global proxy to route requests through HAproxy
 
-## Tested
+## Testing
 
 - All testing has been completed with iOS 15 using palera1n
 - Only confirmed on older A9 processors aka iPhone SE first gen
