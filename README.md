@@ -20,7 +20,6 @@ A script, `./bin/setup`, is included to help with initial configuration of a jai
   - [Why is my https url not working?](#why-is-my-https-url-not-working)
 - [References](#references)
 
-
 ## Prerequisites
 
 - A Mac
@@ -158,6 +157,13 @@ top_level_folder
 ├── gc.deb
 ├── pogo.ipa
 └── version.txt
+```
+
+Your `version.txt` file should have the following. Obviously update the versions to match what is currently released.
+
+```sh
+gc: 2.0.248
+pogo: 0.265.0
 ```
 
 Then in your config point `dmon_url` to `http://HOSTNAME:PORT/top_level_folder`.
