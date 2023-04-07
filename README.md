@@ -36,6 +36,7 @@ A script is included to help with the initial configuration of a jailbroken devi
     User root
     Port 2222
     StrictHostKeyChecking no
+    UserKnownHostsFile=/dev/null
     #IdentityFile ~/.ssh/main.pub
 
   Host *
