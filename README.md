@@ -2,9 +2,9 @@
 
 > :construction_worker: :hammer: **Work in progress** :construction: :vertical_traffic_light:
 
-A monitor solution for jailbroken iOS devices. The core goal of this project is to make sure a specific iOS application is constantly running without needed to use Single App Mode (SAM) or Guided Access Mode (GAM).
+dmon is a monitor solution for jailbroken iOS devices. This project's core goal is to ensure a specific iOS application is constantly running without needing to use Single App Mode (SAM) or Guided Access Mode (GAM).
 
-A script, `./bin/setup`, is included to help with initial configuration of a jailbroken device.
+A script is included to help with the initial configuration of a jailbroken device: `./bin/setup`
 
 ## Table of Contents
 
@@ -12,10 +12,10 @@ A script, `./bin/setup`, is included to help with initial configuration of a jai
 - [Getting started](#getting-started)
 - [Testing](#testing)
 - [Commonly asked questions](#commonly-asked-questions)
-  - [Why didnt you use theos to build the deb](#why-didnt-you-use-theos-to-build-the-deb)
+  - [Why didn't you use Theos to build the deb](#why-didnt-you-use-theos-to-build-the-deb)
   - [How do I stop it?](#how-can-i-stop-it)
-  - [How do I setup the webserver?](#how-do-i-setup-the-webserver)
-  - [Why did you reuse the existing `config.json`](#why-did-you-reuse-the-existing-configjson)
+  - [How do I set up the webserver?](#how-do-i-setup-the-webserver)
+  - [Why did you reuse the existing `config.json`?](#why-did-you-reuse-the-existing-configjson)
   - [Why didn't you include the debs I need](#why-didnt-you-include-the-debs-i-need)
   - [Why is my https url not working?](#why-is-my-https-url-not-working)
 - [References](#references)
@@ -27,15 +27,17 @@ A script, `./bin/setup`, is included to help with initial configuration of a jai
 - Apple Command Line Tools (`xcode-select --install`)
 - imobiledevice tools (`brew install libimobiledevice`)
 - Optional but **highly recommend** creating a ssh keypair
-- Setup your ssh config entry. This makes your life much easier as ssh sessions can be remembered.
+- Setup your ssh config entry. Life is much easier when your ssh sessions are remembered.
 
   ```sh
   cat ~/.ssh/config
-  Host iphone
+  Host iphone localhost
     HostName localhost
     User root
     Port 2222
     StrictHostKeyChecking no
+    UserKnownHostsFile=/dev/null
+    #IdentityFile ~/.ssh/main.pub
 
   Host *
     ControlMaster auto
@@ -45,7 +47,7 @@ A script, `./bin/setup`, is included to help with initial configuration of a jai
 
 ## Getting started
 
-It is assumed you know your way around a command line. All commands are run on your computer connected to a single iOS device. While it is possible to do some of this manually on a jailbroken iOS device that is pron to human error.
+It is assumed you know your way around a command line. Commands are ran on your computer connected to a single iOS device.
 
 1. Grab a valid iOS 14+ device and jailbreak it: https://ios.cfw.guide/get-started/select-iphone/
 1. Clone this git repo.
@@ -62,9 +64,9 @@ It is assumed you know your way around a command line. All commands are run on y
 
 1. Create a `config.json` at the root of this repo with the correct values.
 
-   Make sure to remove all `// comments` before saving. They are not valid json!
+   Make sure to remove all `// comments` before saving. They are not valid JSON!
 
-   ```json
+   ```js
    {
      "api_key": "YOUR_API_KEY",
      "device_configuration_manager_url": "https://YOUR_AWESOME_DCM_URL",
@@ -82,9 +84,9 @@ It is assumed you know your way around a command line. All commands are run on y
    - https://apt.bingner.com/debs/1443.00/com.saurik.substrate.safemode_0.9.6005_iphoneos-arm.deb
    - https://repo.spooferpro.com/debs/com.spooferpro.kernbypass_1.1.0_iphoneos-arm64.deb
    - https://github.com/clburlison/dmon/releases
-   - (Optional - Required to pogo.ipa updates) https://cydia.akemi.ai/debs/nodelete-ai.akemi.appsyncunified.deb
-   - (Optional - Required to pogo.ipa updates) https://cydia.akemi.ai/debs/nodelete-ai.akemi.appinst.deb
-   - **Potentially any paid/private debs. nudge, nudge, wink, wink**
+   - (Optional - Required for pogo.ipa updates) https://cydia.akemi.ai/debs/nodelete-ai.akemi.appsyncunified.deb
+   - (Optional - Required for pogo.ipa updates) https://cydia.akemi.ai/debs/nodelete-ai.akemi.appinst.deb
+   - **Potentially any paid/private debs. Nudge, nudge, wink, wink**
 
 1. Grab a copy of Pokemon Go via [majd/ipatool](https://github.com/majd/ipatool).
 
@@ -96,14 +98,14 @@ It is assumed you know your way around a command line. All commands are run on y
    ```
 
 1. Connect your iOS device to your computer via USB.
-1. Open Terminal and run (remember to only have one phone connected).
+1. Open Terminal.app and run (remember only to have one phone connected).
 
    ```sh
    # Alteratively you can pass -u <device-uuid> if multiple phones are connected
    iproxy 2222 22
    ```
 
-1. Then in a separate terminal window run:
+1. Then, in a separate terminal window, run:
 
    ```sh
    ssh root@localhost -p 2222 # default password is 'alpine'
@@ -118,25 +120,25 @@ It is assumed you know your way around a command line. All commands are run on y
    ./bin/setup -s ~/.ssh/main.pub
    ```
 
-1. Assuming everything worked correctly your phone should be properly configured.
+1. Assuming everything worked correctly, your phone is now properly configured.
 
 Bonus items that are out of scope for this project.
 
 - Configure your device as supervised and push a wireless mobileconfig profile
-- Configure your device to use Shared Internet from your mac
+- Configure your device to use Shared Internet from your Mac
 - Supervise your device and push a global proxy to route requests through HAproxy
 
 ## Testing
 
 - All testing has been completed with iOS 15 using palera1n
-- Only confirmed on older A9 processors aka iPhone SE first gen
+- Only confirmed on older A9 processors, aka iPhone SE first gen
 - DEB Package is built on macOS Ventura
 
 ## Commonly asked questions
 
 ### Why didn't you use Theos to build the deb?
 
-I was expecting to add a few external compiled binaries and didn't want to read a ton of documentation. Things changed and now I'm too lazy to rewrite.
+I was expecting to add a few external compiled binaries and wanted to avoid reading the documentation. But, unfortunately, things changed, and I don't want to rewrite it.
 
 ### How can I stop it?!?!
 
@@ -148,9 +150,9 @@ I was expecting to add a few external compiled binaries and didn't want to read 
    /usr/bin/launchctl unload /Library/LaunchDaemons/com.github.clburlison.dmon.plist
    ```
 
-### How do I setup the webserver?
+### How do I set up the webserver?
 
-It is a flat structure. You can use nginx, apache, caddy, python, node, etc. Your files should be named like this:
+It is a flat structure. You can use Nginx, Apache, Caddy, Python, NodeJS, etc. Your files should be named:
 
 ```sh
 top_level_folder
@@ -159,26 +161,26 @@ top_level_folder
 └── version.txt
 ```
 
-Your `version.txt` file should have the following. Obviously update the versions to match what is currently released.
+Your `version.txt` file should have the following text. Update the versions to match what is currently released.
 
 ```sh
 gc: 2.0.248
 pogo: 0.265.0
 ```
 
-Then in your config point `dmon_url` to `http://HOSTNAME:PORT/top_level_folder`.
+Then in your config, point `dmon_url` to `http://HOSTNAME:PORT/top_level_folder`.
 
 ### Why did you reuse the existing `config.json`?
 
-This isn't a pure solution. I am lazy. Now bugger off.
+I was lazy and figured this would make it easier for you. Now bugger off.
 
 ### Why didn't you include the debs I need?
 
-I don't have the original authors permissions to upload their files.
+I don't have the original author's permission to upload their files.
 
 ### Why is my https url not working?
 
-We are using the stock CA Certificates installed as part of the iOS jailbreak. The Procursus Team placed files in `/usr/lib/ssl/cacert.pem` and I figured it would be safe to keep using them. Those root certs might have expired and need an update.
+dmon is using the stock CA Certificates installed as part of the iOS jailbreak. The Procursus Team placed files in `/usr/lib/ssl/cacert.pem` and I figured it would be safe to keep using them. Those root certs might have expired and need an update if you are running into an issue.
 
 ## References
 

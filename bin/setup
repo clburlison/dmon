@@ -1,6 +1,6 @@
 #!/bin/zsh
 ############################################
-# Version 0.0.4
+# Version 0.0.5
 ############################################
 SCRIPT_NAME=$(basename $0)
 # Make sure this is always ran from the parent directory path.
@@ -37,9 +37,9 @@ fi
 # ssh root@localhost -p 2222 'apt install -y --allow-unauthenticated com.ex.substitute'
 
 echo Copying over all debs
-scp -P 2222 -r ./debs root@localhost:~/
+scp -P 2222 -r ./debs root@localhost:~/debs
 echo Installing all debs
-ssh -p 2222 root@localhost "dpkg -i *.deb"
+ssh -p 2222 root@localhost "dpkg -i ~/debs/*.deb"
 
 echo Copying over config file
 ssh -p 2222 root@localhost 'mkdir -p /var/mobile/Application\ Support/GoCheats/'
