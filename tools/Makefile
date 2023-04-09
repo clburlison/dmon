@@ -24,3 +24,8 @@ include $(THEOS_MAKE_PATH)/tool.mk
 all::
 	mkdir -p ../src/usr/bin
 	/bin/cp .theos/obj/dmon ../src/usr/bin
+
+upload:: all
+	ssh iphone "rm /usr/bin/dmon" || true
+	sleep 2
+	scp .theos/obj/dmon iphone:/usr/bin/dmon
