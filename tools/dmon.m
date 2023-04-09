@@ -4,6 +4,32 @@
 #import <dlfcn.h>
 #include <curl/curl.h>
 
+@interface LSResourceProxy : NSObject
+@end
+
+@interface LSBundleProxy : LSResourceProxy
+    @property (nonatomic, readonly) NSString *localizedShortName;
+@end
+
+@interface LSApplicationProxy : LSBundleProxy
+    @property (nonatomic, readonly) NSString *applicationType;
+    @property (nonatomic, readonly) NSString *applicationIdentifier;
+    @property(readonly) NSURL * dataContainerURL;
+    @property(readonly) NSURL * bundleContainerURL;
+    @property(readonly) NSString * localizedShortName;
+    @property(readonly) NSString * localizedName;
+@end
+
+@interface LSApplicationWorkspace : NSObject
+    + (id)defaultWorkspace;
+    - (BOOL)installApplication:(NSURL *)path withOptions:(NSDictionary *)options;
+    - (BOOL)uninstallApplication:(NSString *)identifier withOptions:(NSDictionary *)options;
+    - (id)allApplications;
+    - (id)allInstalledApplications;
+    - (BOOL)applicationIsInstalled:(id)arg1;
+    - (id)applicationsOfType:(unsigned int)arg1;
+@end
+
 
 NSString * getFrontMostApplication() {
     mach_port_t p = SBSSpringBoardServerPort();
@@ -14,47 +40,6 @@ NSString * getFrontMostApplication() {
     NSString * frontmostApp = [NSString stringWithFormat:@"%s", frontmostAppS];
     NSLog(@"dmon: Frontmost app is: %@", frontmostApp);
     return (frontmostApp);
-}
-
-NSString * installedPogoVersion(void) {
-    char path[1035];
-    FILE *pogo_cmd = popen("find /var/containers/Bundle/Application/ -type d -name 'PokmonGO.app'", "r");
-    NSString *bundlePath = nil;
-    if (pogo_cmd == NULL) {
-        NSLog(@"dmon: Unable to find PokemonGo on device");
-        return nil;
-    }
-
-    // Read the output from the command
-    if (fgets(path, sizeof(path)-1, pogo_cmd) != NULL) {
-        bundlePath = [NSString stringWithUTF8String:path];
-        bundlePath = [bundlePath stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]];
-        bundlePath = [bundlePath stringByAppendingPathComponent: @"Info.plist"];
-    }
-
-    // Close the file
-    pclose(pogo_cmd);
-
-    NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath:bundlePath];
-
-    if (fileHandle) {
-        // Read the contents of the file
-        NSData *fileData = [fileHandle readDataToEndOfFile];
-        // Close the file handle
-        [fileHandle closeFile];
-        // Convert the file data to a dictionary
-        NSDictionary *infoDict = [NSPropertyListSerialization propertyListWithData:fileData options:NSPropertyListImmutable format:NULL error:NULL];
-        if (infoDict) {
-            NSString *versionString = [infoDict objectForKey:@"CFBundleShortVersionString"];
-            NSLog(@"dmon: Version of Pokemon Go: %@", versionString);
-            return versionString;
-        }
-    }
-    else {
-        NSLog(@"dmon: Failed to open file for reading: %@", bundlePath);
-    }
-
-    return nil;
 }
 
 NSString *getAptList(NSString *packageName) {
@@ -214,11 +199,34 @@ int downloadFile(NSString *url, NSString *userpass, NSString *outfile) {
     return -1;
 }
 
+NSDictionary *installedAppInfo(NSString * bundleID) {
+    LSApplicationWorkspace *workspace = [NSClassFromString(@"LSApplicationWorkspace") defaultWorkspace];
+    for (LSApplicationProxy *proxy in [workspace applicationsOfType:0]) {
+        if ([[proxy applicationIdentifier] isEqualToString: bundleID]) {
+            NSString *bundlePath = [proxy bundleContainerURL].path;
+
+            // This might be a bad assumption. I only checked it with PokemonGO
+            NSString *infoFile = [NSString stringWithFormat:@"%@.app/Info.plist", [proxy localizedShortName]];
+            bundlePath = [bundlePath stringByAppendingPathComponent: infoFile];
+            NSDictionary *infoDict = [[NSDictionary alloc] initWithContentsOfFile:bundlePath];
+            NSString *versionString = [infoDict objectForKey:@"CFBundleShortVersionString"];
+
+            NSDictionary *dict = @{@"bundle_name" : [proxy localizedShortName],
+                                @"bundle_id" : [proxy applicationIdentifier],
+                                @"bundle_version" : versionString,
+                                @"bundle_path" : [proxy bundleContainerURL].path};
+            NSLog(@"dmon: Version of %@: %@", bundleID, versionString);
+            return dict;
+        }
+    }
+    return nil;
+}
+
 void update(NSDictionary *config) {
     NSString *versionFile = @"version.txt";
     NSString *pogo_ipa = @"pogo.ipa";
     NSString *gc_deb = @"gc.deb";
-    NSString *pogoVersion = installedPogoVersion();
+    NSString *pogoVersion = installedAppInfo(@"com.nianticlabs.pokemongo")[@"bundle_version"];
     NSString *gcVersion = getAptList(@"com.gocheats.jb");
     // getAptList(@"com.github.clburlison.dmon");
 

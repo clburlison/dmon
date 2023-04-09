@@ -7,3 +7,4 @@ releases
 *.dylib
 .theos
 local
+/bin/update
