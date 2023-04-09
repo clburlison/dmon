@@ -6,5 +6,12 @@ cd ..
 # Ugly hack. This should really be excluded by dm.pl but ¯\_(ツ)_/¯
 /usr/bin/find . -name '.DS_Store' -type f -prune -exec rm -rf '{}' +
 DEB_VERSION=$(grep -i "^Version:" ./src/DEBIAN/control | cut -d' ' -f2 -)
-mkdir releases
+mkdir releases 2>/dev/null
 ./bin/dm.pl src/ releases/com.github.clburlison.dmon-"$DEB_VERSION".deb
+
+# I really hate shell scripts. Should use a real language for this...
+HASH1=$(shasum -a256 "releases/com.github.clburlison.dmon-"$DEB_VERSION".deb" | cut -d " " -f1)
+HASH2=$(md5 "releases/com.github.clburlison.dmon-"$DEB_VERSION".deb" | cut -d " " -f4)
+
+echo "SHA-256: \`$HASH1\`"
+echo "MD5: \`$HASH2\`"

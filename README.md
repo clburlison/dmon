@@ -70,7 +70,7 @@ It is assumed you know your way around a command line. Commands are ran on your 
    {
      "api_key": "YOUR_API_KEY",
      "device_configuration_manager_url": "https://YOUR_AWESOME_DCM_URL",
-     "dmon_url": "https://YOUR_URL:PORT/path/", // Url to download update files from
+     "dmon_url": "https://YOUR_URL:PORT/path/", // Url to download update files from. Leave empty if you don't want to use the update function.
      "dmon_username": "username", // Basic Auth username. Leave empty if not used
      "dmon_password": "password" // Basic Auth password. Leave empty if not used
    }
