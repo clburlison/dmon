@@ -42,30 +42,42 @@ NSString * getFrontMostApplication() {
     return (frontmostApp);
 }
 
-NSString *getAptList(NSString *packageName) {
-    FILE *fp;
-    char path[1035];
-    NSString *command = [NSString stringWithFormat:@"dpkg-query --showformat='${Version}' --show %@ 2>/dev/null", packageName];
-    NSString *version = nil;
+NSDictionary *getAptList(NSString *packageName) {
+    NSDictionary *result = [NSDictionary dictionary];
+    NSString *dpkStatusFile = @"/var/lib/dpkg/status";
+    NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath:dpkStatusFile];
 
-    // Open the command for reading
-    fp = popen([command UTF8String], "r");
-    if (fp == NULL) {
-        NSLog(@"dmon: Failed to run command.");
-        return nil;
+    if (fileHandle) {
+        // Read the contents of the file
+        NSData *fileData = [fileHandle readDataToEndOfFile];
+        // Convert the file data to a string
+        NSString *fileString = [[NSString alloc] initWithData:fileData encoding:NSUTF8StringEncoding];
+        // Close the file handle
+        [fileHandle closeFile];
+        // Convert the file data to a dictionary
+        NSArray *packages = [fileString componentsSeparatedByString:@"\n\n"];
+        
+        for (NSString *packageString in packages) {
+            NSMutableDictionary *packageDict = [NSMutableDictionary dictionary];
+            NSArray *packageLines = [packageString componentsSeparatedByString:@"\n"];
+            
+            for (NSString *line in packageLines) {
+                NSArray *keyValue = [line componentsSeparatedByString:@": "];
+                if (keyValue.count == 2) {
+                    packageDict[keyValue[0]] = keyValue[1];
+                }
+            }
+
+            if ([packageDict[@"Package"] isEqualToString:packageName]) {
+                NSLog(@"dmon: Version of %@: %@", packageName, packageDict[@"Version"]);
+                return packageDict;
+            }
+        }
     }
-
-    // Read the output from the command
-    if (fgets(path, sizeof(path)-1, fp) != NULL) {
-        version = [NSString stringWithUTF8String:path];
-        version = [version stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]];
+    else {
+        NSLog(@"dmon: Failed to open file for reading: %@", dpkStatusFile);
     }
-
-    // Close the file
-    pclose(fp);
-
-    NSLog(@"dmon: Version of %@: %@", packageName, version);
-    return version;
+    return result;
 }
 
 NSDictionary * parseConfig(void) {
@@ -94,7 +106,6 @@ NSDictionary * parseConfig(void) {
 
 NSMutableDictionary * parseKeyValueFileAtPath(NSString *filePath) {
     NSMutableDictionary *resultDict = [NSMutableDictionary dictionary];
-    
     NSError *error = nil;
     NSString *fileContents = [NSString stringWithContentsOfFile:filePath encoding:NSUTF8StringEncoding error:&error];
     if (error) {
@@ -227,7 +238,7 @@ void update(NSDictionary *config) {
     NSString *pogo_ipa = @"pogo.ipa";
     NSString *gc_deb = @"gc.deb";
     NSString *pogoVersion = installedAppInfo(@"com.nianticlabs.pokemongo")[@"bundle_version"];
-    NSString *gcVersion = getAptList(@"com.gocheats.jb");
+    NSString *gcVersion = getAptList(@"com.gocheats.jb")[@"Version"];
     // getAptList(@"com.github.clburlison.dmon");
 
     // Strip trailing forward slashes to make things consistent for users
@@ -282,13 +293,6 @@ void monitor(void) {
         killall(@"pokemongo");
         sleep(5);
 
-        // Attempt to check versions and update now that Pogo & Kernbypass are not running
-        NSDictionary *config = parseConfig();
-        if (config[@"dmon_url"] != nil && [config[@"dmon_url"] isKindOfClass:[NSString class]] && ![config[@"dmon_url"] isEqualToString:@""]) {
-            // NSLog(@"dmon: Full config: %@", config);
-            update(config);
-        }
-
         // Launch Pogo
         NSLog(@"dmon: Pogo not running. Launch it...");
         void* sbServices = dlopen("/System/Library/PrivateFrameworks/SpringBoardServices.framework/SpringBoardServices", RTLD_LAZY);
@@ -302,6 +306,27 @@ void monitor(void) {
 
 int main(void) {
     NSLog(@"dmon: Starting...");
+
+    // Start loop
+    int i = 0;
+    while (1) {
+        // Only call at the start of loop
+        NSDictionary *config = parseConfig();
+        if (i == 0 && config[@"dmon_url"] != nil && [config[@"dmon_url"] isKindOfClass:[NSString class]] && ![config[@"dmon_url"] isEqualToString:@""]) {
+            // NSLog(@"dmon: Full config: %@", config);
+            update(config);
+        }
+
+        // Call this function every loop
+        monitor();
+
+        // Restart loop on the 30th iteration
+        if (++i == 30) {
+            i = 0;
+        }
+
+        sleep(30);
+    }
 
     // Start loop
     while (1) {
