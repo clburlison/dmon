@@ -146,6 +146,9 @@ int installIpa(NSString *filePath) {
     fscanf(install_ipa_cmd, "%d", &results);
     pclose(install_ipa_cmd);
     NSLog(@"dmon: Results for %@ are: %d", filePath, results);
+    if (remove([filePath UTF8String]) != 0) {
+        NSLog(@"Failed to delete the file %@", filePath);
+    }
     return results;
 }
 
@@ -161,6 +164,10 @@ int installDeb(NSString *filePath) {
     }
     ext_code = pclose(install_deb_cmd);
     NSLog(@"dmon: Results for %@ are: %d", filePath, ext_code);
+    // Delete the package install
+    if (remove([filePath UTF8String]) != 0) {
+        NSLog(@"Failed to delete the file %@", filePath);
+    }
     return ext_code;
 }
 
@@ -237,9 +244,10 @@ void update(NSDictionary *config) {
     NSString *versionFile = @"version.txt";
     NSString *pogo_ipa = @"pogo.ipa";
     NSString *gc_deb = @"gc.deb";
+    NSString *dmon_deb = @"dmon.deb";
     NSString *pogoVersion = installedAppInfo(@"com.nianticlabs.pokemongo")[@"bundle_version"];
     NSString *gcVersion = getAptList(@"com.gocheats.jb")[@"Version"];
-    // getAptList(@"com.github.clburlison.dmon");
+    NSString *dmonVersion = getAptList(@"com.github.clburlison.dmon")[@"Version"];
 
     // Strip trailing forward slashes to make things consistent for users
     NSString *url = [config[@"dmon_url"] stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]];
@@ -256,6 +264,19 @@ void update(NSDictionary *config) {
 
     // Parse the config map style version.txt to NSDictionary
     NSMutableDictionary *parsedVersion = parseKeyValueFileAtPath(versionFile);
+
+    // Update dmon if needed
+    if (![dmonVersion isEqualToString:parsedVersion[@"dmon"]]) {
+        NSLog(@"dmon: dmon version mismatch. Have '%@'. Need '%@'", dmonVersion, parsedVersion[@"dmon"]);
+        int gcDownload = downloadFile(
+            [NSString stringWithFormat:@"%@/%@", url, dmon_deb],
+            [NSString stringWithFormat:@"%@:%@", config[@"dmon_username"], config[@"dmon_password"]],
+            dmon_deb
+        );
+        if (gcDownload == 0) {
+            installDeb(dmon_deb);
+        }
+    }
 
     // Update Pogo if needed
     if (![pogoVersion isEqualToString:parsedVersion[@"pogo"]]) {
