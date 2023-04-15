@@ -12,7 +12,6 @@ A script is included to help with the initial configuration of a jailbroken devi
 - [Getting started](#getting-started)
 - [Testing](#testing)
 - [Commonly asked questions](#commonly-asked-questions)
-  - [Why didn't you use Theos to build the deb](#why-didnt-you-use-theos-to-build-the-deb)
   - [How do I stop it?](#how-can-i-stop-it)
   - [How do I set up the webserver?](#how-do-i-setup-the-webserver)
   - [Why did you reuse the existing `config.json`?](#why-did-you-reuse-the-existing-configjson)
@@ -135,10 +134,6 @@ Bonus items that are out of scope for this project.
 - DEB Package is built on macOS Ventura
 
 ## Commonly asked questions
-
-### Why didn't you use Theos to build the deb?
-
-I was expecting to add a few external compiled binaries and wanted to avoid reading the documentation. But, unfortunately, things changed, and I don't want to rewrite it.
 
 ### How can I stop it?!?!
 

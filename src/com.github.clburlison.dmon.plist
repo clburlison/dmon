@@ -4,15 +4,15 @@
 <dict>
 	<key>Label</key>
 	<string>com.github.clburlison.dmon</string>
-	<key>ProgramArguments</key>
-	<array>
-		<string>/usr/bin/dmon</string>
-	</array>
+	<key>Program</key>
+	<string>/usr/bin/dmon</string>
 	<key>StandardErrorPath</key>
 	<string>/dev/null</string>
 	<key>StandardOutPath</key>
 	<string>/dev/null</string>
 	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
 	<true/>
 	<key>UserName</key>
 	<string>root</string>

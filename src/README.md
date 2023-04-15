@@ -1,4 +1,4 @@
-## Build steps for tools
+## Developer build steps
 
 ```sh
 export THEOS=./theos
