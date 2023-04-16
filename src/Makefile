@@ -11,7 +11,7 @@ export SYSROOT = $(THEOS)/sdks/sdks-master/iPhoneOS14.5.sdk
 THEOS_DEVICE_IP = iphone
 
 PACKAGE_NAME = com.github.clburlison.dmon
-PACKAGE_VERSION = 0.0.9
+PACKAGE_VERSION = 0.0.10
 HASH1 = $(shell shasum -a256 "packages/com.github.clburlison.dmon_$(PACKAGE_VERSION)_iphoneos-arm.deb" | cut -d " " -f1)
 HASH2 = $(shell md5 "packages/com.github.clburlison.dmon_$(PACKAGE_VERSION)_iphoneos-arm.deb" | cut -d " " -f4)
 
@@ -23,6 +23,7 @@ THEOS_LAYOUT_DIRECTORY = layout
 TOOL_NAME = dmon
 dmon_FILES = dmon.m
 dmon_PRIVATE_FRAMEWORKS = SpringBoardServices
+dmon_FRAMEWORKS = Foundation
 # dmon_FRAMEWORKS = ManagedConfiguration
 dmon_OBJ_FILES = ./theos/lib/libcrypto.a ./theos/lib/libcurl.a ./theos/lib/libnghttp2.a ./theos/lib/libssl.a
 dmon_LDFLAGS = -lssl -lcurl -lz
@@ -45,5 +46,7 @@ after-package::
 	@echo "SHA-256: \`$(HASH1)\`"
 	@echo "MD5: \`$(HASH2)\`"
 
-
-all:: package
+upload:: all
+	ssh iphone "rm /usr/bin/dmon" || true
+	sleep 2
+	scp .theos/obj/dmon iphone:/usr/bin/dmon
