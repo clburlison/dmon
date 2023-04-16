@@ -1,9 +1,6 @@
-#import <Foundation/Foundation.h>
-#include <CoreFoundation/CoreFoundation.h>
 #include <SpringBoardServices/SpringBoardServices.h>
-#import <UIKit/UIKit.h>
 #include <sys/sysctl.h>
-#import <dlfcn.h>
+#include <dlfcn.h>
 #include <curl/curl.h>
 
 @interface LSResourceProxy : NSObject
