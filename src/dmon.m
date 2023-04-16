@@ -277,6 +277,7 @@ void stopBypassAndPogo(void) {
     sleep(5);
     NSLog(@"dmon: Restarting Kernbypass...");
     terminateProcessWithName(@"kernbypass");
+    sleep(2);
 }
 
 void update(NSDictionary *config) {
