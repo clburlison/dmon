@@ -130,7 +130,7 @@ int killall(NSString *appName) {
     NSLog(@"dmon: Stopping appName: %@", appName);
     int stop_pid;
     char command[100]; // Make it large enough.
-    sprintf(command, "killall %s 2>/dev/null", [appName UTF8String]);
+    sprintf(command, "/var/root/install/killall %s 2>/dev/null", [appName UTF8String]);
     FILE *stop_pid_cmd = popen(command, "r");
     fscanf(stop_pid_cmd, "%d", &stop_pid);
     pclose(stop_pid_cmd);
@@ -164,7 +164,7 @@ int installDeb(NSString *filePath) {
     return ext_code;
 }
 
-int downloadFile(NSString *url, NSString *userpass, NSString *outfile) {
+int downloadFile(NSString *url, NSString *authtoken, NSString *outfile) {
     CURL *curl;
     FILE *fp;
     long httpCode = -1;
@@ -174,9 +174,14 @@ int downloadFile(NSString *url, NSString *userpass, NSString *outfile) {
         // Set the URL
         curl_easy_setopt(curl, CURLOPT_URL, [url UTF8String]);
         
-        // Set the authentication headers
-        curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-        curl_easy_setopt(curl, CURLOPT_USERPWD, [userpass UTF8String]);
+        // Set headers
+        struct curl_slist* headers = NULL;
+        curl_slist_append(headers, "Content-Type: application/json");
+        curl_easy_setopt(curl, CURLOPT_XOAUTH2_BEARER, [authtoken UTF8String]);
+        curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BEARER);
+        
+        // Redirect
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
         
         // Set the output file
         fp = fopen([outfile UTF8String], "wb");
@@ -189,7 +194,7 @@ int downloadFile(NSString *url, NSString *userpass, NSString *outfile) {
         CURLcode res = curl_easy_perform(curl);
 
         // Get the http status code
-        curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &httpCode);
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
 
         // Clean up
         fclose(fp);
@@ -242,11 +247,11 @@ void update(NSDictionary *config) {
     // getAptList(@"com.github.clburlison.dmon");
 
     // Strip trailing forward slashes to make things consistent for users
-    NSString *url = [config[@"dmon_url"] stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]];
+    NSString *url = [config[@"device_configuration_manager_url"] stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]];
     NSLog(@"dmon: Update URL is: %@", url);
     int versionDownload = downloadFile(
-        [NSString stringWithFormat:@"%@/%@", url, versionFile],
-        [NSString stringWithFormat:@"%@:%@", config[@"dmon_username"], config[@"dmon_password"]],
+        [NSString stringWithFormat:@"%@/api/%@", url, versionFile],
+        [NSString stringWithFormat:@"%@", config[@"api_key"]],
         versionFile
     );
     if (versionDownload != 0) {
@@ -261,8 +266,8 @@ void update(NSDictionary *config) {
     if (![pogoVersion isEqualToString:parsedVersion[@"pogo"]]) {
         NSLog(@"dmon: Pogo version mismatch. Have '%@'. Need '%@'", pogoVersion, parsedVersion[@"pogo"]);
         int pogoDownload = downloadFile(
-            [NSString stringWithFormat:@"%@/%@", url, pogo_ipa],
-            [NSString stringWithFormat:@"%@:%@", config[@"dmon_username"], config[@"dmon_password"]],
+            [NSString stringWithFormat:@"%@/api/download/%@", url, pogo_ipa],
+            [NSString stringWithFormat:@"%@", config[@"api_key"]],
             pogo_ipa
         );
         if (pogoDownload == 0) {
@@ -274,8 +279,8 @@ void update(NSDictionary *config) {
     if (![gcVersion isEqualToString:parsedVersion[@"gc"]]) {
         NSLog(@"dmon: GC version mismatch. Have '%@'. Need '%@'", gcVersion, parsedVersion[@"gc"]);
         int gcDownload = downloadFile(
-            [NSString stringWithFormat:@"%@/%@", url, gc_deb],
-            [NSString stringWithFormat:@"%@:%@", config[@"dmon_username"], config[@"dmon_password"]],
+            [NSString stringWithFormat:@"%@/api/download/%@", url, gc_deb],
+            [NSString stringWithFormat:@"%@", config[@"api_key"]],
             gc_deb
         );
         if (gcDownload == 0) {
@@ -312,7 +317,7 @@ int main(void) {
     while (1) {
         // Only call at the start of loop
         NSDictionary *config = parseConfig();
-        if (i == 0 && config[@"dmon_url"] != nil && [config[@"dmon_url"] isKindOfClass:[NSString class]] && ![config[@"dmon_url"] isEqualToString:@""]) {
+        if (i == 0) {
             // NSLog(@"dmon: Full config: %@", config);
             update(config);
         }
@@ -328,10 +333,5 @@ int main(void) {
         sleep(30);
     }
 
-    // Start loop
-    while (1) {
-        monitor();
-        sleep(30);
-    }
     return 0;
 }
