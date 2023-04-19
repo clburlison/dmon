@@ -130,7 +130,7 @@ int killall(NSString *appName) {
     NSLog(@"dmon: Stopping appName: %@", appName);
     int stop_pid;
     char command[100]; // Make it large enough.
-    sprintf(command, "/var/root/install/killall %s 2>/dev/null", [appName UTF8String]);
+    sprintf(command, "killall %s 2>/dev/null", [appName UTF8String]);
     FILE *stop_pid_cmd = popen(command, "r");
     fscanf(stop_pid_cmd, "%d", &stop_pid);
     pclose(stop_pid_cmd);
