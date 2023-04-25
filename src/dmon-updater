@@ -1,0 +1,12 @@
+#!/usr/bin/bash
+
+/usr/bin/launchctl unload /Library/LaunchDaemons/com.github.clburlison.dmon.plist
+if test -f "/var/root/dmon.deb"; then
+    /usr/bin/dpkg -i /var/root/dmon.deb
+    /usr/bin/rm /var/root/dmon.deb
+fi
+# The deb post install script should handle this load step
+/usr/bin/launchctl load /Library/LaunchDaemons/com.github.clburlison.dmon.plist
+/usr/bin/launchctl unload /Library/LaunchDaemons/com.github.clburlison.dmon-updater.plist
+
+exit 0

@@ -12,7 +12,6 @@ A script is included to help with the initial configuration of a jailbroken devi
 - [Getting started](#getting-started)
 - [Testing](#testing)
 - [Commonly asked questions](#commonly-asked-questions)
-  - [Why didn't you use Theos to build the deb](#why-didnt-you-use-theos-to-build-the-deb)
   - [How do I stop it?](#how-can-i-stop-it)
   - [How do I set up the webserver?](#how-do-i-setup-the-webserver)
   - [Why did you reuse the existing `config.json`?](#why-did-you-reuse-the-existing-configjson)
@@ -136,14 +135,11 @@ Bonus items that are out of scope for this project.
 
 ## Commonly asked questions
 
-### Why didn't you use Theos to build the deb?
-
-I was expecting to add a few external compiled binaries and wanted to avoid reading the documentation. But, unfortunately, things changed, and I don't want to rewrite it.
-
 ### How can I stop it?!?!
 
 1. Close Pokemon Go on the phone
-2. ssh into the phone & unload the launch daemon
+2. Open kernbypass UI on the phone and click **Disable** (maybe required...maybe not)
+3. ssh into the phone & unload the launch daemon
 
    ```sh
    ssh iphone
@@ -156,6 +152,7 @@ It is a flat structure. You can use Nginx, Apache, Caddy, Python, NodeJS, etc. Y
 
 ```sh
 top_level_folder
+├── dmon.deb
 ├── gc.deb
 ├── pogo.ipa
 └── version.txt
@@ -164,6 +161,7 @@ top_level_folder
 Your `version.txt` file should have the following text. Update the versions to match what is currently released.
 
 ```sh
+dmon: 0.0.9
 gc: 2.0.248
 pogo: 0.265.0
 ```

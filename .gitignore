@@ -1,5 +1,5 @@
 config.json
-releases
+packages
 *.ipa
 *.deb
 .env

@@ -1,6 +1,0 @@
-#!/usr/bin/bash
-
-/usr/bin/rm /usr/bin/dmon_old 2>/dev/null
-/usr/bin/launchctl unload /Library/LaunchDaemons/com.github.clburlison.dmon.plist 2>/dev/null
-/usr/bin/sleep 2
-/usr/bin/launchctl load /Library/LaunchDaemons/com.github.clburlison.dmon.plist

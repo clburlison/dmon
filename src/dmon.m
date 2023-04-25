@@ -1,7 +1,6 @@
-#import <Foundation/Foundation.h>
-#include <CoreFoundation/CoreFoundation.h>
-#import <SpringBoardServices/SpringBoardServices.h>
-#import <dlfcn.h>
+#include <SpringBoardServices/SpringBoardServices.h>
+#include <sys/sysctl.h>
+#include <dlfcn.h>
 #include <curl/curl.h>
 
 @interface LSResourceProxy : NSObject
@@ -30,14 +29,13 @@
     - (id)applicationsOfType:(unsigned int)arg1;
 @end
 
-
-NSString * getFrontMostApplication() {
+NSString *getFrontMostApplication() {
     mach_port_t p = SBSSpringBoardServerPort();
     char frontmostAppS[256];
     memset(frontmostAppS, 0, sizeof(frontmostAppS));
     SBFrontmostApplicationDisplayIdentifier(p, frontmostAppS);
     
-    NSString * frontmostApp = [NSString stringWithFormat:@"%s", frontmostAppS];
+    NSString *frontmostApp = [NSString stringWithFormat:@"%s", frontmostAppS];
     NSLog(@"dmon: Frontmost app is: %@", frontmostApp);
     return (frontmostApp);
 }
@@ -126,15 +124,48 @@ NSMutableDictionary * parseKeyValueFileAtPath(NSString *filePath) {
     return resultDict;
 }
 
-int killall(NSString *appName) {
-    NSLog(@"dmon: Stopping appName: %@", appName);
-    int stop_pid;
-    char command[100]; // Make it large enough.
-    sprintf(command, "killall %s 2>/dev/null", [appName UTF8String]);
-    FILE *stop_pid_cmd = popen(command, "r");
-    fscanf(stop_pid_cmd, "%d", &stop_pid);
-    pclose(stop_pid_cmd);
-    return stop_pid;
+void terminateProcessWithName(NSString *processName) {
+    // Declare variables
+    struct kinfo_proc *processes;
+    size_t size;
+    int sysctlResult;
+
+    // Get the size of the buffer required to hold the process list
+    sysctlResult = sysctlbyname("kern.proc.all", NULL, &size, NULL, 0);
+    if (sysctlResult != 0) {
+        NSLog(@"dmon: Failed to get process count");
+        return;
+    }
+
+    // Allocate the buffer for the process list
+    processes = malloc(size);
+    if (processes == NULL) {
+        NSLog(@"dmon: Failed to allocate process list buffer");
+        return;
+    }
+
+    // Get the list of running processes
+    sysctlResult = sysctlbyname("kern.proc.all", processes, &size, NULL, 0);
+    if (sysctlResult != 0) {
+        NSLog(@"dmon: Failed to get process list");
+        free(processes);
+        return;
+    }
+
+    // Iterate over the process list and stop the correct process
+    for (int i = 0; i < size / sizeof(struct kinfo_proc); i++) {
+        struct kinfo_proc process = processes[i];
+        NSString *procName = [NSString stringWithUTF8String:process.kp_proc.p_comm];
+        if ([procName isEqualToString:processName]) {
+            pid_t pid = process.kp_proc.p_pid;
+            kill(pid, SIGKILL); // SIGTERM or SIGKILL
+            NSLog(@"dmon: Process '%@' (PID %d) terminated", procName, pid);
+            break;
+        }
+    }
+
+    // Free the buffer
+    free(processes);
 }
 
 int installIpa(NSString *filePath) {
@@ -146,6 +177,9 @@ int installIpa(NSString *filePath) {
     fscanf(install_ipa_cmd, "%d", &results);
     pclose(install_ipa_cmd);
     NSLog(@"dmon: Results for %@ are: %d", filePath, results);
+    if (remove([filePath UTF8String]) != 0) {
+        NSLog(@"Failed to delete the file %@", filePath);
+    }
     return results;
 }
 
@@ -161,6 +195,22 @@ int installDeb(NSString *filePath) {
     }
     ext_code = pclose(install_deb_cmd);
     NSLog(@"dmon: Results for %@ are: %d", filePath, ext_code);
+    // Delete the package install
+    if (remove([filePath UTF8String]) != 0) {
+        NSLog(@"Failed to delete the file %@", filePath);
+    }
+    return ext_code;
+}
+
+int updateDmon() {
+    NSLog(@"dmon: Self updating...");
+    int ext_code;
+    char command[100];
+    // the launchctl "start" argument does not work on iOS
+    sprintf(command, "/usr/bin/launchctl load /Library/LaunchDaemons/com.github.clburlison.dmon-updater.plist");
+    FILE *launch_daemon_cmd = popen(command, "r");
+    ext_code = pclose(launch_daemon_cmd);
+    NSLog(@"dmon: Results for dmon self update are: %d", ext_code);
     return ext_code;
 }
 
@@ -233,13 +283,23 @@ NSDictionary *installedAppInfo(NSString * bundleID) {
     return nil;
 }
 
+void stopBypassAndPogo(void) {
+    NSLog(@"dmon: Force stopping PokemonGo...");
+    terminateProcessWithName(@"PokmonGO");
+    sleep(5);
+    NSLog(@"dmon: Restarting Kernbypass...");
+    terminateProcessWithName(@"kernbypass");
+    sleep(2);
+}
+
 void update(NSDictionary *config) {
     NSString *versionFile = @"version.txt";
     NSString *pogo_ipa = @"pogo.ipa";
     NSString *gc_deb = @"gc.deb";
+    NSString *dmon_deb = @"dmon.deb";
     NSString *pogoVersion = installedAppInfo(@"com.nianticlabs.pokemongo")[@"bundle_version"];
     NSString *gcVersion = getAptList(@"com.gocheats.jb")[@"Version"];
-    // getAptList(@"com.github.clburlison.dmon");
+    NSString *dmonVersion = getAptList(@"com.github.clburlison.dmon")[@"Version"];
 
     // Strip trailing forward slashes to make things consistent for users
     NSString *url = [config[@"dmon_url"] stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]];
@@ -256,6 +316,33 @@ void update(NSDictionary *config) {
 
     // Parse the config map style version.txt to NSDictionary
     NSMutableDictionary *parsedVersion = parseKeyValueFileAtPath(versionFile);
+
+    // If any component needs to be updated we should stop Pokemon Go
+    if (
+            ![dmonVersion isEqualToString:parsedVersion[@"dmon"]] ||
+            ![pogoVersion isEqualToString:parsedVersion[@"pogo"]] ||
+            ![gcVersion isEqualToString:parsedVersion[@"gc"]]
+        ) {
+        stopBypassAndPogo();
+    }
+
+
+    // Update dmon if needed
+    if (![dmonVersion isEqualToString:parsedVersion[@"dmon"]]) {
+        NSLog(@"dmon: dmon version mismatch. Have '%@'. Need '%@'", dmonVersion, parsedVersion[@"dmon"]);
+        int dmonDownload = downloadFile(
+            [NSString stringWithFormat:@"%@/%@", url, dmon_deb],
+            [NSString stringWithFormat:@"%@:%@", config[@"dmon_username"], config[@"dmon_password"]],
+            dmon_deb
+        );
+        if (dmonDownload == 0) {
+            int exitCode = updateDmon();
+            if (exitCode == 0) {
+                NSLog(@"dmon: Starting a self update. Exiting...");
+                exit(0);
+            }
+        }
+    }
 
     // Update Pogo if needed
     if (![pogoVersion isEqualToString:parsedVersion[@"pogo"]]) {
@@ -287,19 +374,15 @@ void update(NSDictionary *config) {
 void monitor(void) {
     NSString *currentApp = getFrontMostApplication();
     if (![currentApp isEqualToString:@"com.nianticlabs.pokemongo"]) {
-        NSLog(@"dmon: Restarting Kernbypass...");
-        killall(@"/usr/bin/kernbypass");
-        NSLog(@"dmon: Force stopping Pogo...");
-        killall(@"pokemongo");
-        sleep(5);
+        stopBypassAndPogo();
 
         // Launch Pogo
-        NSLog(@"dmon: Pogo not running. Launch it...");
+        NSLog(@"dmon: PokemonGo not running. Launch it...");
         void* sbServices = dlopen("/System/Library/PrivateFrameworks/SpringBoardServices.framework/SpringBoardServices", RTLD_LAZY);
         int (*SBSLaunchApplicationWithIdentifier)(CFStringRef identifier, Boolean suspended) = dlsym(sbServices, "SBSLaunchApplicationWithIdentifier");
         NSString *bundleString=[NSString stringWithUTF8String:"com.nianticlabs.pokemongo"];
         int result = SBSLaunchApplicationWithIdentifier((__bridge CFStringRef)bundleString, NO);
-        NSLog(@"dmon: Launch Pogo: %d", result);
+        NSLog(@"dmon: PokemonGo Launch Results: %d", result);
         dlclose(sbServices);
     }
 }
@@ -308,30 +391,29 @@ int main(void) {
     NSLog(@"dmon: Starting...");
 
     // Start loop
-    int i = 0;
-    while (1) {
-        // Only call at the start of loop
-        NSDictionary *config = parseConfig();
-        if (i == 0 && config[@"dmon_url"] != nil && [config[@"dmon_url"] isKindOfClass:[NSString class]] && ![config[@"dmon_url"] isEqualToString:@""]) {
-            // NSLog(@"dmon: Full config: %@", config);
-            update(config);
+    @autoreleasepool {
+        int i = 0;
+        while (1) {
+            NSDictionary *config = parseConfig();
+            if (
+                i == 0 &&
+                config[@"dmon_url"] != nil &&
+                [config[@"dmon_url"] isKindOfClass:[NSString class]] &&
+                ![config[@"dmon_url"] isEqualToString:@""]
+            ) {
+                update(config);
+            }
+
+            // Call this function every loop
+            monitor();
+
+            // Restart loop on the 30th iteration
+            if (++i == 30) {
+                i = 0;
+            }
+
+            sleep(30);
         }
-
-        // Call this function every loop
-        monitor();
-
-        // Restart loop on the 30th iteration
-        if (++i == 30) {
-            i = 0;
-        }
-
-        sleep(30);
-    }
-
-    // Start loop
-    while (1) {
-        monitor();
-        sleep(30);
     }
     return 0;
 }

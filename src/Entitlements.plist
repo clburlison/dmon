@@ -14,5 +14,7 @@
 	<true/>
 	<key>com.apple.springboard.launchapplications</key>
 	<true/>
+	<key>com.apple.springboard.services</key>
+	<true/>
 </dict>
 </plist>
