@@ -24,7 +24,7 @@ done
 shift "$(($OPTIND -1))"
 
 # If local copy of Pogo exists then install it now
-if test -f "./pogo.ip"; then
+if test -f "./pogo.ipa"; then
     echo Installing Pogo
     ideviceinstaller -i ./pogo.ipa
 fi
