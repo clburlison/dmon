@@ -1,0 +1,4 @@
+#!/usr/bin/bash
+
+/usr/bin/launchctl unload /Library/LaunchDaemons/com.github.clburlison.dmon.plist
+exit 0

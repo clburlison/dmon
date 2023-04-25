@@ -18,7 +18,6 @@ HASH2 = $(shell md5 "packages/com.github.clburlison.dmon_$(PACKAGE_VERSION)_ipho
 # INSTALL_TARGET_PROCESSES = SpringBoard
 TOOL_PATH = /usr/bin/dmon
 DAEMON_PATH = LaunchDaemons/com.github.clburlison.dmon.plist
-# POSTINST_PATH = postinst
 THEOS_LAYOUT_DIRECTORY = layout
 TOOL_NAME = dmon
 dmon_FILES = dmon.m
@@ -29,6 +28,7 @@ dmon_OBJ_FILES = ../theos/lib/libcrypto.a ../theos/lib/libcurl.a ../theos/lib/li
 dmon_LDFLAGS = -lssl -lcurl -lz
 dmon_CODESIGN_FLAGS = -SEntitlements.plist
 LAUNCHDAEMON_PLIST = com.github.clburlison.dmon.plist
+LAUNCHDAEMON_UPDATER_PLIST = com.github.clburlison.dmon-updater.plist
 LAUNCHDAEMON_PATH = /Library/LaunchDaemons
 
 include $(THEOS)/makefiles/common.mk
@@ -38,8 +38,11 @@ before-stage::
 	find . -name ".DS_Store" -delete
 
 before-package::
+	mkdir -p $(THEOS_STAGING_DIR)/usr/bin
 	mkdir -p $(THEOS_STAGING_DIR)$(LAUNCHDAEMON_PATH)
 	cp $(LAUNCHDAEMON_PLIST) $(THEOS_STAGING_DIR)$(LAUNCHDAEMON_PATH)/
+	cp $(LAUNCHDAEMON_UPDATER_PLIST) $(THEOS_STAGING_DIR)$(LAUNCHDAEMON_PATH)/
+	cp dmon-updater $(THEOS_STAGING_DIR)/usr/bin/
 
 after-package::
 	make clean

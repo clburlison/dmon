@@ -202,6 +202,18 @@ int installDeb(NSString *filePath) {
     return ext_code;
 }
 
+int updateDmon() {
+    NSLog(@"dmon: Self updating...");
+    int ext_code;
+    char command[100];
+    // the launchctl "start" argument does not work on iOS
+    sprintf(command, "/usr/bin/launchctl load /Library/LaunchDaemons/com.github.clburlison.dmon-updater.plist");
+    FILE *launch_daemon_cmd = popen(command, "r");
+    ext_code = pclose(launch_daemon_cmd);
+    NSLog(@"dmon: Results for dmon self update are: %d", ext_code);
+    return ext_code;
+}
+
 int downloadFile(NSString *url, NSString *userpass, NSString *outfile) {
     CURL *curl;
     FILE *fp;
@@ -318,13 +330,17 @@ void update(NSDictionary *config) {
     // Update dmon if needed
     if (![dmonVersion isEqualToString:parsedVersion[@"dmon"]]) {
         NSLog(@"dmon: dmon version mismatch. Have '%@'. Need '%@'", dmonVersion, parsedVersion[@"dmon"]);
-        int gcDownload = downloadFile(
+        int dmonDownload = downloadFile(
             [NSString stringWithFormat:@"%@/%@", url, dmon_deb],
             [NSString stringWithFormat:@"%@:%@", config[@"dmon_username"], config[@"dmon_password"]],
             dmon_deb
         );
-        if (gcDownload == 0) {
-            installDeb(dmon_deb);
+        if (dmonDownload == 0) {
+            int exitCode = updateDmon();
+            if (exitCode == 0) {
+                NSLog(@"dmon: Starting a self update. Exiting...");
+                exit(0);
+            }
         }
     }
 
@@ -375,23 +391,29 @@ int main(void) {
     NSLog(@"dmon: Starting...");
 
     // Start loop
-    int i = 0;
-    while (1) {
-        NSDictionary *config = parseConfig();
-        if (i == 0 && config[@"dmon_url"] != nil && [config[@"dmon_url"] isKindOfClass:[NSString class]] && ![config[@"dmon_url"] isEqualToString:@""]) {
-            // NSLog(@"dmon: Full config: %@", config);
-            update(config);
+    @autoreleasepool {
+        int i = 0;
+        while (1) {
+            NSDictionary *config = parseConfig();
+            if (
+                i == 0 &&
+                config[@"dmon_url"] != nil &&
+                [config[@"dmon_url"] isKindOfClass:[NSString class]] &&
+                ![config[@"dmon_url"] isEqualToString:@""]
+            ) {
+                update(config);
+            }
+
+            // Call this function every loop
+            monitor();
+
+            // Restart loop on the 30th iteration
+            if (++i == 30) {
+                i = 0;
+            }
+
+            sleep(30);
         }
-
-        // Call this function every loop
-        monitor();
-
-        // Restart loop on the 30th iteration
-        if (++i == 30) {
-            i = 0;
-        }
-
-        sleep(30);
     }
     return 0;
 }

@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>Label</key>
-	<string>com.github.clburlison.dmon</string>
+	<string>com.github.clburlison.dmon-updater</string>
 	<key>Program</key>
-	<string>/usr/bin/dmon</string>
+	<string>/usr/bin/dmon-updater</string>
 	<key>WorkingDirectory</key>
 	<string>/var/root</string>
 	<key>StandardErrorPath</key>
@@ -13,8 +13,6 @@
 	<key>StandardOutPath</key>
 	<string>/dev/null</string>
 	<key>RunAtLoad</key>
-	<true/>
-	<key>KeepAlive</key>
 	<true/>
 	<key>UserName</key>
 	<string>root</string>

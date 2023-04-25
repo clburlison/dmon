@@ -1,6 +1,9 @@
 #!/usr/bin/bash
 
 /usr/bin/rm /usr/bin/dmon_old 2>/dev/null
-/usr/bin/launchctl unload /Library/LaunchDaemons/com.github.clburlison.dmon.plist 2>/dev/null
-/usr/bin/sleep 2
-/usr/bin/launchctl load /Library/LaunchDaemons/com.github.clburlison.dmon.plist
+# Always attempt to load the LaunchDaemon. This will error if it is already running.
+/usr/bin/launchctl load /Library/LaunchDaemons/com.github.clburlison.dmon.plist 2>/dev/null
+# Restart the LaunchDaemon. This solves an issue when dmon updates itself.
+/usr/bin/launchctl kickstart -kp system/com.github.clburlison.dmon
+
+exit 0
