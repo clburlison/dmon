@@ -110,8 +110,9 @@ NSMutableDictionary * parseKeyValueFileAtPath(NSString *filePath) {
         NSLog(@"dmon: Error reading file: %@", error);
         return nil;
     }
-    
-    NSArray *lines = [fileContents componentsSeparatedByString:@"\n"];
+
+    NSCharacterSet *lineSeparatorSet = [NSCharacterSet characterSetWithCharactersInString:@"\n\r"];
+    NSArray *lines = [fileContents componentsSeparatedByCharactersInSet:lineSeparatorSet];
     for (NSString *line in lines) {
         NSArray *parts = [line componentsSeparatedByString:@": "];
         if (parts.count == 2) {

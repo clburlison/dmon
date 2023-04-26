@@ -11,7 +11,7 @@ export SYSROOT = $(THEOS)/sdks/sdks-master/iPhoneOS14.5.sdk
 THEOS_DEVICE_IP = iphone
 
 PACKAGE_NAME = com.github.clburlison.dmon
-PACKAGE_VERSION = 0.1.0
+PACKAGE_VERSION = 0.1.1
 HASH1 = $(shell shasum -a256 "packages/com.github.clburlison.dmon_$(PACKAGE_VERSION)_iphoneos-arm.deb" | cut -d " " -f1)
 HASH2 = $(shell md5 "packages/com.github.clburlison.dmon_$(PACKAGE_VERSION)_iphoneos-arm.deb" | cut -d " " -f4)
 
